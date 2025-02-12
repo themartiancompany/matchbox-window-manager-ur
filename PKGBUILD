@@ -31,7 +31,7 @@ _proj="yoctoproject"
 _pkg=matchbox
 pkgname="${_pkg}-window-manager"
 pkgver=1.2.2
-_commit=844f61069896fe3f549ab425d731c061028f697c
+_commit="844f61069896fe3f549ab425d731c061028f697c"
 pkgrel=1
 _pkgdesc=(
   "A pretty much unique X window manager"
@@ -51,6 +51,7 @@ license=(
   'GPL'
 )
 depends=(
+  'gconf'
   'libmatchbox'
   'startup-notification'
   'libpng'
@@ -58,14 +59,14 @@ depends=(
   'libxcursor'
 )
 url="http://${_pkg}-project.org/"
-_http="https://git.${_proj}.org/cgit/cgit.cgi"
-_ns="cgit/cgit.cgi"
-_url="${http}/${_ns}/${_pkg}"
+_http="https://git.${_proj}.org"
+_ns="${pkgname}"
+_url="${_http}/${_ns}"
 source=(
-  "${_url}/snapshot/${pkgname}-${_commit}.tar.bz2"
+  "${_url}/snapshot/${pkgname}-${_commit}.tar.gz"
 )
 sha256sums=(
-  '4ac29942f1da25d5b0dc7e62b713746fe0c6596fe885bcb7c8ffa053758cc0e6'
+  '2f3f48ee2281f3ad6deab6f6b34c09af7978a384d8b8599193aa1edb6965c7ac'
 )
 
 build() {
