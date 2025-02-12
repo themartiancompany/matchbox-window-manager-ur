@@ -27,6 +27,18 @@
 # Maintainer: Sergej Pupykin <pupykin.s+arch@gmail.com>
 # Contributor: Henrique C. Alves <hcarvalhoalves@gmail.com>
 
+_os="$( \
+  uname \
+    -o)"
+_gconf="false"
+_expat="true"
+if [[ "${_expat}" == "true" ]]; then
+  if [[ "${_os}" == "Android" ]]; then
+    _libexpat="libexpat"
+  elif [[ "${_os}" == "GNU/Linux" ]]; then
+    _libexpat="expat"
+  fi
+fi
 _proj="yoctoproject"
 _pkg=matchbox
 pkgname="${_pkg}-window-manager"
@@ -51,17 +63,33 @@ license=(
   'GPL'
 )
 depends=(
-  'gconf'
   'libmatchbox'
   'startup-notification'
   'libpng'
   'libsm'
   'libxcursor'
 )
+if [[ "${_expat}" == "true" ]]; then
+  depends=(
+    "${_libexpat}"
+  )
+  makedepends=(
+    "${_libexpat}"
+  )
+fi
+if [[ "${_gconf}" == "true" ]]; then
+  depends=(
+    'gconf'
+  )
+fi
+makedepends=(
+  'gconf'
+)
 url="http://${_pkg}-project.org/"
 _http="https://git.${_proj}.org"
 _ns="${pkgname}"
 _url="${_http}/${_ns}"
+_tarname="${pkgname}-${_commit}"
 source=(
   "${_url}/snapshot/${pkgname}-${_commit}.tar.gz"
 )
@@ -70,23 +98,59 @@ sha256sums=(
 )
 
 build() {
+  local \
+    _cflags=() \
+    _configure_opts=()
+  _configure_opts+=(
+    --sysconfdir="/etc"
+    --prefix="/usr"
+    --enable-startup-notification
+    --enable-session
+    --enable-alt-input-wins
+  )
+  if [[ "${_gconf}" == "true" ]]; then
+    _configure_opts+=(
+      --enable-gconf
+    )
+  elif [[ "${_gconf}" == "false" ]]; then
+    _configure_opts+=(
+      --disable-gconf
+    )
+  fi
+  if [[ "${_expat}" == "true" ]]; then
+    _configure_opts+=(
+      --enable-expat
+    )
+  elif [[ "${_expat}" == "false" ]]; then
+    _configure_opts+=(
+      --disable-expat
+    )
+  fi
+  _cflags+=(
+    $CFLAGS
+    -fcommon
+  )
+  if [[ "${_os}" == "Android" ]]; then
+    _cflags+=(
+      -Wl,--allow-shlib-undefined
+    )
+  fi
+  export \
+    CFLAGS="${_cflags[*]}"
   cd \
-    "${pkgname}-${_commit}"
+    "${_tarname}"
+  CFLAGS="${_cflags[*]}" \
   ./autogen.sh
+  CFLAGS="${_cflags[*]}" \
   ./configure \
-    --sysconfdir="/etc" \
-    --prefix="/usr" \
-    --enable-startup-notification \
-    --enable-session \
-    --enable-alt-input-wins \
-    --enable-expat
-  CFLAGS=' -fcommon' \
+    "${_configure_opts[@]}"
+  CFLAGS="${_cflags[*]}" \
   make
 }
 
 package() {
   cd \
-    "${pkgname}-${_commit}"
+    "${_tarname}"
   make \
     DESTDIR="${pkgdir}" \
     install
